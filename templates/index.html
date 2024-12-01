@@ -1,11 +1,44 @@
+{% csrf_token %}
 <head>
 <title>
 test page
 </title>
+<script>
+
+function showMessage(m) {
+  var c = document.getElementById("name");
+  c.innerText = m;
+}
+
+async function subscribe() {
+  let response = await fetch("/zorro_test_bot/ws/", {
+    method: "POST",
+    headers: {'X-CSRFToken': "{{ csrf }}" },
+    body: JSON.stringify({ token: "{{ token }}" }),
+  });
+
+  if (response.status == 502) {
+    await subscribe();
+  } else if (response.status != 200 && response.status != 500) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await subscribe();
+  } else {
+    let message = await response.text();
+    showMessage(message);
+    var l = document.getElementById("link");
+    l.innerHTML="<a href='/login?user='" + message + "'>Login</a>"
+  }
+}
+
+subscribe();
+
+</script>
 </head>
 <body>
    <form action="https://t.me/zorro_test_bot" method="POST">
      <input type="hidden" name="start" value="{{ token }}">
      <input type="submit" value="Войти через Telegram">
    </form>
+   <div id="name"></div>
+   <div id="link"></div>
 </body>
