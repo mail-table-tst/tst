@@ -5,12 +5,16 @@ test page
 </title>
 <script>
 
-function showMessage(m) {
+var max_req = 30;
+
+function showUser(m) {
   var c = document.getElementById("name");
-  c.innerText = m;
+  c.innerText = "Username in Telegram: " + m;
 }
 
 async function subscribe() {
+  max_req--;
+
   let response = await fetch("/zorro_test_bot/ws/", {
     method: "POST",
     headers: {'X-CSRFToken': "{{ csrf }}" },
@@ -18,15 +22,17 @@ async function subscribe() {
   });
 
   if (response.status == 502) {
-    await subscribe();
+    if (max_req)
+      await subscribe();
   } else if (response.status != 200 && response.status != 500) {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await subscribe();
+    if (max_req)
+      await subscribe();
   } else {
     let message = await response.text();
-    showMessage(message);
+    showUser(message);
     var l = document.getElementById("link");
-    l.innerHTML="<a href='/login?user='" + message + "'>Login</a>"
+    l.innerHTML="<a href='/admin/?username='" + message + "'>Login</a>"
   }
 }
 
